@@ -1,5 +1,5 @@
 export enum ArticleType {
-  BRICK = <any>'BRICK',
-  CHAPTER = <any>'CHAPTER',
-  DOCUMENT = <any>'DOCUMENT'
+  BRICK = 'BRICK',
+  CHAPTER = 'CHAPTER',
+  DOCUMENT = 'DOCUMENT'
 }

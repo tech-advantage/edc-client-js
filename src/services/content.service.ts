@@ -2,7 +2,7 @@ import { ContextService } from './context.service';
 import { LanguageService } from './language.service';
 import { DocumentationService } from './documentation.service';
 import { ExportInfoService } from './export-info.service';
-import { Promise as PromiseEs6 } from 'es6-promise';
+import { Promise, Promise as PromiseEs6 } from 'es6-promise';
 import { ExportInfo } from '../entities/export-info';
 import { Helper } from '../entities/helper';
 import { DocumentationTransfer } from '../entities/documentation-transfer';
@@ -33,15 +33,15 @@ export class ContentService {
 
   private static instance: ContentService;
 
-  private contentReady: PromiseEs6<ExportInfo>;
+  private contentReady: PromiseEs6<ExportInfo | null> | null = null;
 
   private constructor(private readonly infoService: ExportInfoService,
-                      private readonly contextService: ContextService,
-                      private readonly translationService: LanguageService,
-                      private readonly documentationService: DocumentationService) {
+    private readonly contextService: ContextService,
+    private readonly translationService: LanguageService,
+    private readonly documentationService: DocumentationService) {
   }
 
-  public static getInstance() {
+  public static getInstance(): ContentService {
     if (!ContentService.instance) {
       ContentService.instance = new ContentService(ExportInfoService.getInstance(),
         ContextService.getInstance(),
@@ -52,7 +52,7 @@ export class ContentService {
     return ContentService.instance;
   }
 
-  initContent(pluginId?: string, contextOnly?: boolean, lang?: string): PromiseEs6<ExportInfo> {
+  initContent(pluginId?: string | null, contextOnly?: boolean, lang?: string): PromiseEs6<ExportInfo | null> {
     this.contentReady = this.infoService.initInfos(pluginId, true, lang)
       .then(() => this.contextService.initContext(this.infoService.getCurrentExportId()))
       .then(() => contextOnly ? null : this.documentationService.initMultiToc(this.infoService.getExportInfoValues()))
@@ -68,13 +68,13 @@ export class ContentService {
     return this.getContentReady().then(() => this.infoService.getTitle());
   }
 
-  getToc(pluginId?: string, langCode?: string): PromiseEs6<Toc> {
+  getToc(pluginId?: string, langCode?: string): PromiseEs6<Toc | null> {
     return this.getContentReady()
       .then(() => this.infoService.setCurrentExportId(pluginId, langCode))
       .then(() => this.documentationService.getToc(this.getCurrentPluginId()));
   }
 
-  getExportInfo(): PromiseEs6<ExportInfo> {
+  getExportInfo(): PromiseEs6<ExportInfo | null | undefined> {
     return this.infoService.getCurrentExportInfo();
   }
 
@@ -82,18 +82,18 @@ export class ContentService {
     return this.infoService.getExportInfoValues();
   }
 
-  getCurrentPluginId(): string {
+  getCurrentPluginId(): string | null {
     return this.infoService.getCurrentExportId();
   }
 
-  getContentReady(pluginId?: string, contextOnly?: boolean, lang?: string): PromiseEs6<ExportInfo> {
+  getContentReady(pluginId?: string, contextOnly?: boolean, lang?: string): PromiseEs6<ExportInfo | null> {
     if (!this.contentReady) {
       return this.initContent(pluginId, contextOnly, lang);
     }
     return this.contentReady || this.initContent(pluginId, contextOnly, lang);
   }
 
-  getContext(mainKey: string, subKey: string, pluginId: string, lang?: string): PromiseEs6<Helper> {
+  getContext(mainKey: string, subKey: string, pluginId: string, lang?: string): PromiseEs6<Helper | null> {
     return this.getContentReady()
       .then(() => this.infoService.setCurrentExportId(pluginId, lang))
       .then(() => this.contextService.initContext(pluginId))
@@ -111,28 +111,29 @@ export class ContentService {
    * @param langCode the 2 letters code of the requested language (en, fr..)
    * @param sourceExportId the identifier of the export from where the request was made
    */
-  getDocumentation(id: number, langCode: string, sourceExportId?: string): PromiseEs6<DocumentationTransfer> {
+  getDocumentation(id: number, langCode: string, sourceExportId?: string): PromiseEs6<DocumentationTransfer | null> {
     // Save current export for further comparisons
     const currentExportId = this.infoService.getCurrentExportId();
-    return this.contentReady
+    return (this.contentReady ?? Promise.reject('Documentation content is not ready'))
       .then(() => this.documentationService.findPluginIdFromDocumentationId(id))// Retrieve the export of the requested documentation
-      .then((exportId: string) => this.infoService.setCurrentExportId(exportId, langCode)) // Check this export id and language, and set new current values
+      .then((exportId: string | null) => this.infoService.setCurrentExportId(exportId, langCode)) // Check this export id and language, and set new current values
       .then(() => this.documentationService.getDocumentation(id, this.translationService.getCurrentLanguage(), this.translationService.getDefaultLanguage()))
-      .then((documentation: Documentation) => {
+      .then((documentation: Documentation | null) => {
         // If no documentation was found, try and restore the export where this documentation was being called from
         if (!documentation) {
           this.infoService.setCurrentExportId(sourceExportId, langCode);
         }
         const hasExportChanged = currentExportId !== this.infoService.getCurrentExportId();
         return new DocumentationTransfer(documentation, this.infoService.getCurrentExportId(), hasExportChanged, this.translationService.getCurrentLanguage());
-      });
+      })
+      .catch(() => null);
   }
 
-  getInformationMapFromDocId(id: number): PromiseEs6<InformationMap> {
-    return this.contentReady.then(() => this.documentationService.getInformationMapFromDocId(id));
+  getInformationMapFromDocId(id: number): PromiseEs6<InformationMap | null> {
+    return (this.contentReady ?? Promise.reject('Content not ready')).then(() => this.documentationService.getInformationMapFromDocId(id));
   }
 
-  getPopoverLabel(pluginId: string, url: UrlConfigService, lang?: string): PromiseEs6<PopoverLabel> {
+  getPopoverLabel(pluginId: string | null, url: UrlConfigService, lang?: string): PromiseEs6<PopoverLabel | null> {
     return this.getContentReady()
       .then(() => this.infoService.setCurrentExportId(pluginId, lang))
       .then(() => this.contextService.initContext(pluginId))

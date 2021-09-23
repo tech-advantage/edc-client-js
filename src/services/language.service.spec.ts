@@ -1,4 +1,5 @@
 import { LanguageService } from './language.service';
+import { cleanInstances } from '../utils/test-utils';
 
 describe('LanguageService test', () => {
 
@@ -7,6 +8,10 @@ describe('LanguageService test', () => {
   beforeEach(() => {
     languageService = LanguageService.getInstance();
     languageService.init('en', 'en', ['de', 'fr']);
+  });
+
+  afterEach(() => {
+    cleanInstances();
   });
 
   describe('isLanguagePresent', () => {
@@ -55,8 +60,8 @@ describe('LanguageService test', () => {
       // Given some languages
       languageService.setLanguages(['de']);
 
-      // When language is null
-      const result = languageService.isLanguagePresent(null);
+      // When language is undefined
+      const result = languageService.isLanguagePresent(undefined);
 
       // Then result should be false
       expect(result).toBeFalsy();

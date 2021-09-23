@@ -1,5 +1,6 @@
 import { ContentTypeSuffix } from '../entities/content-type';
 import { UrlUtil } from '../utils/url-util';
+import { isNil } from '../utils/utils';
 
 export class UrlConfigService {
 
@@ -9,11 +10,12 @@ export class UrlConfigService {
 
   private static instance: UrlConfigService;
 
-  private baseURL: string;
-  private helpURL: string;
-  private i18nURL: string;
+  private baseURL = '';
+  private helpURL = '';
+  private i18nURL = '';
 
-  private constructor() {}
+  private constructor() {
+  }
 
   public static getInstance(): UrlConfigService {
     if (!UrlConfigService.instance) {
@@ -22,10 +24,10 @@ export class UrlConfigService {
     return UrlConfigService.instance;
   }
 
-  setURLs(baseURL: string, helpURL: string, i18nURL: string) {
-    this.baseURL = baseURL;
-    this.helpURL = helpURL;
-    this.i18nURL = i18nURL;
+  setURLs(baseURL: string = '', helpURL: string = '', i18nURL: string = ''): void {
+    this.baseURL = baseURL ?? '';
+    this.helpURL = helpURL ?? '';
+    this.i18nURL = i18nURL ?? '';
   }
 
   getBaseUrl(): string {
@@ -40,37 +42,40 @@ export class UrlConfigService {
     return this.helpURL + '/error';
   }
 
-  getContextUrl(publicationId: string, mainKey: string, subKey: string, languageCode: string, articleIndex: number): string {
-    return `${this.helpURL}/context/${publicationId}/${mainKey}/${subKey}/${languageCode}/${articleIndex}`;
+  getContextUrl(publicationId: string | null, mainKey: string | null, subKey: string | null, languageCode: string | null, articleIndex: number | null): string | null {
+    if (isNil(publicationId) || isNil(mainKey) || isNil(subKey) || isNil(languageCode) || isNil(articleIndex)) {
+      return null;
+    }
+    return `${ this.helpURL }/context/${ publicationId }/${ mainKey }/${ subKey }/${ languageCode }/${ articleIndex }`;
   }
 
-  getDocumentationUrl(id: number, lang?: string, exportId?: string): string {
-    const exportIdPrefix = exportId ? `${exportId}/` : '';
-    const langSuffix = lang ? `/${lang}` : '';
-    return `${this.helpURL}/doc/${exportIdPrefix}${id}${langSuffix}`;
+  getDocumentationUrl(id: number, lang?: string | null, exportId?: string | null): string {
+    const exportIdPrefix = exportId ? `${ exportId }/` : '';
+    const langSuffix = lang ? `/${ lang }` : '';
+    return `${ this.helpURL }/doc/${ exportIdPrefix }${ id }${ langSuffix }`;
   }
 
   getI18nBaseUrl(): string {
-    return `${this.baseURL}/${UrlConfigService.I18N_ROOT_FOLDER}`;
+    return this.i18nURL ? this.i18nURL : `${ this.baseURL }/${ UrlConfigService.I18N_ROOT_FOLDER }`;
   }
 
   getWebHelpI18nUrl(): string {
-    return `${this.getI18nBaseUrl()}/${UrlConfigService.I18N_WEB_HELP_FOLDER}`;
+    return `${ this.getI18nBaseUrl() }/${ UrlConfigService.I18N_WEB_HELP_FOLDER }`;
   }
 
   getPopoverI18nUrl(): string {
-    return `${this.getI18nBaseUrl()}/${UrlConfigService.I18N_POPOVER_FOLDER}`;
+    return `${ this.getI18nBaseUrl() }/${ UrlConfigService.I18N_POPOVER_FOLDER }`;
   }
 
-  getFileUrl(fileUrl: string, exportId?: string): string {
+  getFileUrl(fileUrl: string | null, exportId?: string): string {
     return UrlUtil.getFileUrl(this.getBaseUrl(), fileUrl, exportId);
   }
 
-  getContentUrl(contentType: ContentTypeSuffix, exportId?: string): string {
+  getContentUrl(contentType: ContentTypeSuffix, exportId?: string | null): string | null {
     return UrlUtil.getContentUrl(this.getBaseUrl(), contentType, exportId);
   }
 
-  getPopoverLabelsPath(lang: string): string {
-    return `${UrlConfigService.I18N_ROOT_FOLDER}/${UrlConfigService.I18N_POPOVER_FOLDER}/${lang}.json`;
+  getPopoverLabelsPath(lang: string | null): string | null {
+    return lang ? `${ UrlConfigService.I18N_ROOT_FOLDER }/${ UrlConfigService.I18N_POPOVER_FOLDER }/${ lang }.json` : null;
   }
 }

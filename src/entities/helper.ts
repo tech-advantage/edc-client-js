@@ -4,12 +4,12 @@ import { Link } from './link';
 import { Linkable } from './linkable';
 
 export class Helper implements Loadable, Linkable {
-  exportId: string;
-  label: string;
-  description: string;
-  url: string;
+  exportId: string | null = '';
+  label: string | null = '';
+  description: string | null = '';
+  url: string | null = '';
   content?: string;
-  articles: Article[];
-  links: Link[];
-  language?: string;
+  articles: Article[] | null = null;
+  links: Link[] | null = null;
+  language?: string | null;
 }

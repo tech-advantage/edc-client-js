@@ -1,20 +1,16 @@
-import { ContentsPresentInExports, ContentTypeSuffix } from '../entities/content-type';
+import { ContentTypeSuffix } from '../entities/content-type';
 
 export class UrlUtil {
 
-    static getFileUrl(baseUrl: string, fileName: string, exportId?: string): string {
-      const exportIdPrefix = exportId ? `${exportId}/` : '';
-      return `${baseUrl}/${exportIdPrefix}${fileName}`;
-    }
+  static getFileUrl(baseUrl: string | null, fileName: string | null, exportId?: string | null): string {
+    const exportIdPrefix = exportId ? `${ exportId }/` : '';
+    return `${ baseUrl ?? '' }/${ exportIdPrefix }${ fileName }`;
+  }
 
-    static getContentUrl(baseUrl: string, contentType: ContentTypeSuffix, exportId?: string): string {
-      const exportIdMissing = ContentsPresentInExports.indexOf(contentType) > -1 && !exportId;
-      if (exportIdMissing) {
-        return null;
-      }
-      const exportIdPrefix = exportId ? `${exportId}` : '';
-      const typeSuffix = contentType ? `${contentType}` : '';
+  static getContentUrl(baseUrl: string, contentType: ContentTypeSuffix, exportId?: string | null): string | null {
+    const exportIdPrefix = exportId ? `${ exportId }` : '';
+    const typeSuffix = contentType ? `${ contentType }` : '';
 
-      return `${baseUrl}/${exportIdPrefix}${typeSuffix}`;
-    }
+    return `${ baseUrl }/${ exportIdPrefix }${ typeSuffix }`;
+  }
 }

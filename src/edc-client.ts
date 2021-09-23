@@ -1,7 +1,6 @@
 import { Helper } from './entities/helper';
 import { Toc } from './entities/toc';
 import { InformationMap } from './entities/information-map';
-import { Promise as PromiseEs6 } from 'es6-promise';
 import { DocumentationTransfer } from './entities/documentation-transfer';
 import { ContentService } from './services/content.service';
 import { UrlConfigService } from './services/url-config.service';
@@ -10,8 +9,9 @@ import { ExportInfo } from './entities/export-info';
 import { PopoverLabel } from './entities/popover-label';
 
 export class EdcClient {
-  private contentService: ContentService;
-  private urlConfigService: UrlConfigService;
+
+  private readonly contentService: ContentService;
+  private readonly urlConfigService: UrlConfigService;
 
   private languageService: LanguageService;
 
@@ -37,8 +37,8 @@ export class EdcClient {
    *
    * @return {PromiseEs6<ExportInfo>} a promise containing the export information
    */
-  getContent(exportId?: string, contextOnly?: boolean, langCode?: string): any {
-    return this.contentService.getContentReady(exportId, contextOnly, langCode);
+  getContent(exportId?: string, contextOnly?: boolean, langCode?: string): Promise<ExportInfo | null> {
+    return this.contentService.getContentReady(exportId, contextOnly, langCode) as Promise<ExportInfo | null>;
   }
 
   /**
@@ -47,8 +47,8 @@ export class EdcClient {
    *
    * @return {PromiseEs6<string>} a promise containing the title
    */
-  getTitle(): any {
-    return this.contentService.getTitle();
+  getTitle(): Promise<string> {
+    return this.contentService.getTitle() as Promise<string>;
   }
 
   /**
@@ -58,8 +58,8 @@ export class EdcClient {
    * @param {string} exportId the identifier of the export
    * @return {PromiseEs6<Toc>} the toc of the export
    */
-  getToc(exportId?: string): PromiseEs6<Toc> {
-    return this.contentService.getToc(exportId);
+  getToc(exportId?: string): Promise<Toc | null> {
+    return this.contentService.getToc(exportId) as Promise<Toc | null>;
   }
 
   /**
@@ -71,8 +71,8 @@ export class EdcClient {
    * @param {string} lang the identifier of the used lang
    * @return {PromiseEs6<Helper>} a promise containing the contextual help content
    */
-  getHelper(mainKey: string, subKey: string, pluginId: string, lang?: string): any {
-    return this.getContent().then(() => this.contentService.getContext(mainKey, subKey, pluginId, lang));
+  getHelper(mainKey: string, subKey: string, pluginId: string, lang?: string): Promise<Helper | null> {
+    return this.getContent().then(() => this.contentService.getContext(mainKey, subKey, pluginId, lang)) as Promise<Helper | null>;
   }
 
   /**
@@ -83,7 +83,7 @@ export class EdcClient {
    * @param {string} exportId id the identifier of the documentation export
    * @return {PromiseEs6<DocumentationTransfer>} an object containing the requested doc transfer
    */
-  getDocumentation(id: number, langCode: string, exportId?: string): PromiseEs6<DocumentationTransfer> {
+  getDocumentation(id: number, langCode: string, exportId?: string): Promise<DocumentationTransfer | null> {
     return this.getContent().then(() => this.contentService.getDocumentation(id, langCode, exportId));
   }
 
@@ -96,7 +96,7 @@ export class EdcClient {
    * @param articleIndex  the article index
    * @param publicationId the publication identifier (optional, if not defined, use the default publication identifier)
    */
-  getContextWebHelpUrl(mainKey: string, subKey: string, languageCode: string, articleIndex: number, publicationId?: string): string {
+  getContextWebHelpUrl(mainKey: string, subKey: string, languageCode: string, articleIndex: number, publicationId?: string): string | null {
     const pluginId = publicationId || this.contentService.getCurrentPluginId();
     const lang = this.languageService.isLanguageValid(languageCode) ? languageCode : this.languageService.getCurrentLanguage();
     return this.urlConfigService.getContextUrl(pluginId, mainKey, subKey, lang, articleIndex);
@@ -153,7 +153,7 @@ export class EdcClient {
    * @param {string} lang the identifier of the used lang
    * @return {PromiseEs6<PopoverLabel>} a promise containing the popover labels
    */
-  getPopoverLabels(lang?: string, pluginId?: string): any {
+  getPopoverLabels(lang?: string, pluginId?: string): Promise<PopoverLabel | null> {
     const pId = pluginId || this.contentService.getCurrentPluginId();
     return this.getContent()
       .then(() => this.contentService.getPopoverLabel(pId, this.urlConfigService, lang));
@@ -164,15 +164,15 @@ export class EdcClient {
    *
    * @param id: the identifier of the documentation
    */
-  getInformationMapFromDocId(id: number): PromiseEs6<InformationMap> {
-    return this.contentService.getInformationMapFromDocId(id);
+  getInformationMapFromDocId(id: number): Promise<InformationMap | null> {
+    return this.contentService.getInformationMapFromDocId(id) as Promise<InformationMap | null>;
   }
 
   /**
    * Return the default language code (2 letters) used in current documentation
    *
    */
-  getDefaultLanguage(): string {
+  getDefaultLanguage(): string | null {
     return this.languageService.getDefaultLanguage();
   }
 
@@ -185,7 +185,7 @@ export class EdcClient {
     return this.languageService.isLanguagePresent(lang);
   }
 
-  getCurrentLanguage(): string {
+  getCurrentLanguage(): string | null {
     return this.languageService.getCurrentLanguage();
   }
 

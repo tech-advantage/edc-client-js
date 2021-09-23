@@ -2,13 +2,13 @@ import { Loadable } from './loadable';
 import { PopoverError } from './popover-error';
 
 export class PopoverLabel implements Loadable {
-  exportId: string;
-  url: string;
-  content?: string;
-  articles?: string;
-  links?: string;
-  iconAlt?: string;
-  comingSoon?: string;
-  errorTitle?: string;
-  errors: PopoverError;
+  exportId: string | null = '';
+  url: string | null = '';
+  content?: string | null;
+  articles?: string | null;
+  links?: string | null;
+  iconAlt?: string | null;
+  comingSoon?: string | null;
+  errorTitle?: string | null;
+  errors: PopoverError | null = null;
 }

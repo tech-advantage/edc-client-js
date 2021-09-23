@@ -1,3 +1,3 @@
 export class PopoverError {
-  failedData?: string;
+  failedData?: string | null;
 }

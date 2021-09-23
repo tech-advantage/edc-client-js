@@ -1,4 +1,3 @@
-import { assign } from 'lodash';
 import { Helper } from '../entities/helper';
 import { ContextualHelp } from '../entities/contextual-help';
 import { ContentTypeSuffix } from '../entities/content-type';
@@ -8,18 +7,25 @@ import { firstInfo, secondInfo, thirdInfo } from '../test/myFirstProduct/info';
 import { Info } from '../entities/info';
 import { firstProductToc, secondProductToc, thirdProductToc } from '../test/stub-tocs';
 import { BaseToc } from '../entities/toc';
-import { InformationMap } from '../entities/information-map';
 import { Article } from '../entities/article';
+import { ExportInfoService } from '../services/export-info.service';
+import { ContentService } from '../services/content.service';
+import { ContextService } from '../services/context.service';
+import { DocumentationService } from '../services/documentation.service';
+import { LanguageService } from '../services/language.service';
+import { UrlConfigService } from '../services/url-config.service';
+import { EdcHttpClient } from '../http/edc-http-client';
 
-export function mock<T>(type: new(...args: any[]) => T, objet: any): T {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function mock<T>(type: new(...args: any[]) => T, objet: Partial<T>): T {
   const entity: T = new type();
-  assign(entity, objet);
-  return entity;
+  return { ...entity, ...objet } as T;
 }
 
-export function async(fn: any) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
+export function async(fn: any): (d: () => void) => void {
   jasmine.DEFAULT_TIMEOUT_INTERVAL = 500;
-  return function(done: () => void) {
+  return function (done: () => void) {
     const result = fn();
     result.then(() => {
       done();
@@ -27,7 +33,8 @@ export function async(fn: any) {
   };
 }
 
-export const mockHttpClientGetContent = (suffix: ContentTypeSuffix, exportId?: string) => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
+export const mockHttpClientGetContent = (suffix: ContentTypeSuffix, exportId?: string): PromiseEs6<any> => {
   const productKeys = [
     new ExportInfo('myProduct1', 1),
     new ExportInfo('myProduct3', 3),
@@ -44,7 +51,7 @@ export const mockHttpClientGetContent = (suffix: ContentTypeSuffix, exportId?: s
     secondProductToc,
     thirdProductToc
   ];
-  let response: any;
+  let response: PromiseEs6<string | ExportInfo[] | Info | ContextualHelp | BaseToc | null>;
   switch (suffix) {
     case ContentTypeSuffix.TYPE_MULTI_TOC_SUFFIX: {
       response = PromiseEs6.resolve(productKeys);
@@ -73,7 +80,7 @@ export const mockHttpClientGetContent = (suffix: ContentTypeSuffix, exportId?: s
       }));
       break;
     case ContentTypeSuffix.TYPE_TOC_SUFFIX: {
-      const foundToc: BaseToc = mockedTocs.find((toc: BaseToc) => toc.label === exportId);
+      const foundToc: BaseToc | undefined = mockedTocs.find((toc: BaseToc) => toc && toc.label === exportId);
       response = foundToc ? PromiseEs6.resolve(foundToc) : PromiseEs6.reject('Toc not found for export :' + exportId);
       break;
     }
@@ -85,9 +92,29 @@ export const mockHttpClientGetContent = (suffix: ContentTypeSuffix, exportId?: s
   return response;
 };
 
-export const mockHttpClientGet = (informationMaps: Map<string, InformationMap>) => (url: string) => {
-  const [exportId, informationMap] = Array.from(informationMaps.entries())
-    .find(([key, value]) => url.indexOf(key) > -1);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
+export const mockHttpClientGet = <T>(informationMaps: Map<string, T>) => (url: string | null, exportId?: string): PromiseEs6<any> => {
+  const entry: [string, T] | undefined = Array.from(informationMaps.entries())
+    .find(([key, ]) => url && url.includes(key));
 
-  return PromiseEs6.resolve(informationMap);
+  return entry && entry.length > 1 ? PromiseEs6.resolve(entry[1]) : PromiseEs6.resolve(null);
+};
+
+export const cleanInstances = (): void => {
+  const instances = [
+    ContentService,
+    ContextService,
+    DocumentationService,
+    ExportInfoService,
+    LanguageService,
+    UrlConfigService,
+    EdcHttpClient
+  ];
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  instances.forEach((inst: any) => {
+    if (inst && Object.prototype.hasOwnProperty.call(inst, 'instance')) {
+      inst['instance'] = undefined;
+    }
+  });
 };
