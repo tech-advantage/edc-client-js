@@ -9,12 +9,11 @@ export const informationMap1: InformationMap = {
     topics: [
       mock(Documentation, { id: 2 }),
       mock(Documentation, {
-          id: 3, topics: [
-            mock(Documentation, { id: 4, topics: [mock(Documentation, { id: 5 })] }),
-            mock(Documentation, { id: 6 })
-          ]
-        }
-      )
+        id: 3, topics: [
+          mock(Documentation, { id: 4, topics: [mock(Documentation, { id: 5 })] }),
+          mock(Documentation, { id: 6 })
+        ]
+      })
     ]
   }),
   fr: mock(Documentation, {
@@ -22,12 +21,11 @@ export const informationMap1: InformationMap = {
     topics: [
       mock(Documentation, { id: 2 }),
       mock(Documentation, {
-          id: 3, topics: [
-            mock(Documentation, { id: 4, topics: [mock(Documentation, { id: 5 })] }),
-            mock(Documentation, { id: 6 })
-          ]
-        }
-      )
+        id: 3, topics: [
+          mock(Documentation, { id: 4, topics: [mock(Documentation, { id: 5 })] }),
+          mock(Documentation, { id: 6 })
+        ]
+      })
     ]
   })
 };
@@ -40,12 +38,11 @@ export const informationMap3: InformationMap = {
     topics: [
       mock(Documentation, { id: 42 }),
       mock(Documentation, {
-          id: 43, topics: [
-            mock(Documentation, { id: 44, topics: [mock(Documentation, { id: 45 })] }),
-            mock(Documentation, { id: 46 })
-          ]
-        }
-      )
+        id: 43, topics: [
+          mock(Documentation, { id: 44, topics: [mock(Documentation, { id: 45 })] }),
+          mock(Documentation, { id: 46 })
+        ]
+      })
     ]
   }),
   fr: mock(Documentation, {
@@ -54,12 +51,11 @@ export const informationMap3: InformationMap = {
     topics: [
       mock(Documentation, { id: 42 }),
       mock(Documentation, {
-          id: 43, topics: [
-            mock(Documentation, { id: 44, topics: [mock(Documentation, { id: 45 })] }),
-            mock(Documentation, { id: 46 })
-          ]
-        }
-      )
+        id: 43, topics: [
+          mock(Documentation, { id: 44, topics: [mock(Documentation, { id: 45 })] }),
+          mock(Documentation, { id: 46 })
+        ]
+      })
     ]
   })
 };
@@ -71,12 +67,11 @@ export const informationMap4: InformationMap = {
     topics: [
       mock(Documentation, { id: 62 }),
       mock(Documentation, {
-          id: 43, topics: [
-            mock(Documentation, { id: 64, topics: [mock(Documentation, { id: 65 })] }),
-            mock(Documentation, { id: 66 })
-          ]
-        }
-      )
+        id: 43, topics: [
+          mock(Documentation, { id: 64, topics: [mock(Documentation, { id: 65 })] }),
+          mock(Documentation, { id: 66 })
+        ]
+      })
     ]
   }),
   fr: mock(Documentation, {
@@ -84,12 +79,11 @@ export const informationMap4: InformationMap = {
     topics: [
       mock(Documentation, { id: 62 }),
       mock(Documentation, {
-          id: 43, topics: [
-            mock(Documentation, { id: 64, topics: [mock(Documentation, { id: 65 })] }),
-            mock(Documentation, { id: 66 })
-          ]
-        }
-      )
+        id: 43, topics: [
+          mock(Documentation, { id: 64, topics: [mock(Documentation, { id: 65 })] }),
+          mock(Documentation, { id: 66 })
+        ]
+      })
     ]
   })
 };
@@ -100,12 +94,11 @@ export const informationMap7: InformationMap = {
     id: 81,
     topics: [
       mock(Documentation, {
-          id: 83, topics: [
-            mock(Documentation, { id: 84, topics: [mock(Documentation, { id: 85 })] }),
-            mock(Documentation, { id: 86 })
-          ]
-        }
-      ),
+        id: 83, topics: [
+          mock(Documentation, { id: 84, topics: [mock(Documentation, { id: 85 })] }),
+          mock(Documentation, { id: 86 })
+        ]
+      }),
       mock(Documentation, { id: 82 })
     ]
   }),
@@ -113,12 +106,11 @@ export const informationMap7: InformationMap = {
     id: 81,
     topics: [
       mock(Documentation, {
-          id: 83, topics: [
-            mock(Documentation, { id: 84, topics: [mock(Documentation, { id: 85 })] }),
-            mock(Documentation, { id: 86 })
-          ]
-        }
-      ),
+        id: 83, topics: [
+          mock(Documentation, { id: 84, topics: [mock(Documentation, { id: 85 })] }),
+          mock(Documentation, { id: 86 })
+        ]
+      }),
       mock(Documentation, { id: 82 })
     ]
   })
@@ -130,24 +122,22 @@ export const informationMap11: InformationMap = {
     id: 100,
     topics: [
       mock(Documentation, {
-          id: 101, topics: [
-            mock(Documentation, { id: 102, topics: [mock(Documentation, { id: 103 })] }),
-            mock(Documentation, { id: 104 })
-          ]
-        }
-      )
+        id: 101, topics: [
+          mock(Documentation, { id: 102, topics: [mock(Documentation, { id: 103 })] }),
+          mock(Documentation, { id: 104 })
+        ]
+      })
     ]
   }),
   es: mock(Documentation, {
     id: 100,
     topics: [
       mock(Documentation, {
-          id: 101, topics: [
-            mock(Documentation, { id: 102, topics: [mock(Documentation, { id: 103 })] }),
-            mock(Documentation, { id: 104 })
-          ]
-        }
-      )
+        id: 101, topics: [
+          mock(Documentation, { id: 102, topics: [mock(Documentation, { id: 103 })] }),
+          mock(Documentation, { id: 104 })
+        ]
+      })
     ]
   })
 };

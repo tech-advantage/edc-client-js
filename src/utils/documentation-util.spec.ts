@@ -8,19 +8,19 @@ describe('DocumentationUtil Test', () => {
     let tree: Documentation;
     beforeEach(() => {
       tree =
-        mock(Documentation, {
+        mock<Documentation>(Documentation, {
           id: 1,
           topics: [
-            { id: 10 },
-            {
+            mock(Documentation, { id: 10 }),
+            mock(Documentation, {
               id: 11,
               topics: [
-                {
+                mock(Documentation, {
                   id: 110,
                   topics: []
-                }
+                })
               ]
-            }
+            })
           ]
         });
     });

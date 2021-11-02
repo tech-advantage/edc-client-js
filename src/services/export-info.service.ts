@@ -1,10 +1,11 @@
-import { Promise as PromiseEs6 } from 'es6-promise';
+import { Promise, Promise as PromiseEs6 } from 'es6-promise';
 import { Info } from '../entities/info';
 import { ContentTypeSuffix } from '../entities/content-type';
 import { ExportInfo } from '../entities/export-info';
 import { EdcHttpClient } from '../http/edc-http-client';
 import { LanguageService } from './language.service';
 import { AxiosError } from 'axios';
+import { isNil } from '../utils/utils';
 
 /**
  * Handles the documentation export information for every export (plugin) that was found in the root folder
@@ -21,11 +22,11 @@ export class ExportInfoService {
 
   // This map holds the collection of all exported products in multidoc.json whose files were found in the root folder
   private infos: Map<string, ExportInfo> = new Map();
-  private infosReady: PromiseEs6<Map<string, ExportInfo>>;
-  private currentExportId: string;
+  private infosReady: PromiseEs6<Map<string, ExportInfo | null>> | null = null;
+  private currentExportId: string | null = null;
 
   private constructor(private readonly httpClient: EdcHttpClient,
-                      private readonly translationService: LanguageService) {
+    private readonly translationService: LanguageService) {
   }
 
   public static getInstance(): ExportInfoService {
@@ -35,7 +36,7 @@ export class ExportInfoService {
     return ExportInfoService.instance;
   }
 
-  initInfos(exportId?: string, contextOnly?: boolean, lang?: string): PromiseEs6<Map<string, ExportInfo>> {
+  initInfos(exportId?: string | null, contextOnly?: boolean, lang?: string): PromiseEs6<Map<string, ExportInfo | null>> {
     this.infosReady = this.readMultiToc()
       .then((keys: ExportInfo[]) => PromiseEs6.all(keys.map((exportInfo: ExportInfo) => this.readInfos(exportInfo))))
       .then(() => this.initExportId(exportId, lang))
@@ -47,7 +48,7 @@ export class ExportInfoService {
     return this.infos;
   }
 
-  getCurrentExportId(): string {
+  getCurrentExportId(): string | null {
     return this.currentExportId;
   }
 
@@ -65,37 +66,47 @@ export class ExportInfoService {
     }
     return this.infosReady
       .then(() => {
-        const currentInfo: Info = this.getCurrentInfo();
+        const currentInfo: Info | null | undefined = this.getCurrentInfo();
         if (!currentInfo) {
           throw new Error('Could not get title: no current Export information');
         }
+        if (!this.translationService.getCurrentLanguage()) {
+          throw new Error('Current Language is not defined');
+        }
+        if (!this.translationService.getDefaultLanguage()) {
+          throw new Error('Default Language is not defined');
+        }
+        const currentLang = this.translationService.getCurrentLanguage();
+        const defaultLang = this.translationService.getDefaultLanguage();
 
         // By default use product info name
         let title = currentInfo.name;
 
         // Try and get translated titles
         const titles = currentInfo.titles;
-        if (titles) {
+        if (titles && currentLang) {
           // Use current language if present
-          if (titles[this.translationService.getCurrentLanguage()] && titles[this.translationService.getCurrentLanguage()].title) {
-            title = titles[this.translationService.getCurrentLanguage()].title;
-          } else if (titles[this.translationService.getDefaultLanguage()] && titles[this.translationService.getDefaultLanguage()].title) {
+          if (titles[currentLang] && titles[currentLang].title) {
+            title = titles[currentLang].title;
+          } else if (defaultLang && titles[defaultLang] && titles[defaultLang].title) {
             // Else use default language
-            title = titles[this.translationService.getDefaultLanguage()].title;
+            title = titles[defaultLang].title;
           }
         }
         return title;
       });
   }
 
-  getCurrentExportInfo(): PromiseEs6<ExportInfo> {
-    return this.infosReady.then(() => {
-      const exportInfo = this.infos.get(this.getCurrentExportId());
-      if (exportInfo) {
-        exportInfo.currentLanguage = this.translationService.getCurrentLanguage();
-      }
-      return exportInfo;
-    });
+  getCurrentExportInfo(): PromiseEs6<ExportInfo | null | undefined> {
+    return isNil(this.infosReady) ? Promise.reject('No information for current export')
+      : this.infosReady.then(() => {
+        const currentExportId = this.getCurrentExportId();
+        const exportInfo: ExportInfo | null | undefined = isNil(currentExportId) ? null : this.infos.get(currentExportId);
+        if (exportInfo) {
+          exportInfo.currentLanguage = this.translationService.getCurrentLanguage();
+        }
+        return exportInfo;
+      });
   }
 
   /**
@@ -105,12 +116,12 @@ export class ExportInfoService {
    *
    * @param exportInfo the export information associated with the information file
    */
-  readInfos(exportInfo: ExportInfo): PromiseEs6<Info> {
+  readInfos(exportInfo: ExportInfo): PromiseEs6<Info | null> {
     if (!exportInfo || !exportInfo.pluginId) {
       throw new Error('Export information not valid');
     }
     this.infos.clear();
-    return this.httpClient.getContent(ContentTypeSuffix.TYPE_INFO_SUFFIX, exportInfo.pluginId)
+    return this.httpClient.getContent<Info>(ContentTypeSuffix.TYPE_INFO_SUFFIX, exportInfo.pluginId)
       .then((info: Info) => {
         exportInfo.info = this.getInfo(info, exportInfo.pluginId);
         this.infos.set(exportInfo.pluginId, exportInfo);
@@ -135,9 +146,9 @@ export class ExportInfoService {
    * @param exportId the identifier of the documentation export
    * @param requestedLang the language to set
    */
-  setCurrentExportId(exportId?: string, requestedLang?: string): string {
+  setCurrentExportId(exportId?: string | null, requestedLang?: string): string | null {
     if (this.doesExportExist(exportId) && exportId !== this.currentExportId) {
-      this.currentExportId = exportId;
+      this.currentExportId = exportId ?? null;
       // If it s a new export, reset the language information, trying to conserve the requested language
       this.initLanguages(requestedLang);
     } else if (requestedLang) {
@@ -147,48 +158,13 @@ export class ExportInfoService {
     return this.getCurrentExportId();
   }
 
-  doesExportExist(exportId: string): boolean {
-    return this.infos.has(exportId) && !!this.infos.get(exportId);
+  doesExportExist(exportId: string | null | undefined): boolean {
+    return !isNil(exportId) && this.infos.has(exportId) && !!this.infos.get(exportId);
   }
 
-  private readMultiToc(): PromiseEs6<ExportInfo[]> {
-    return this.httpClient.getContent(ContentTypeSuffix.TYPE_MULTI_TOC_SUFFIX)
-      .then((exportInfos: ExportInfo[]) => {
-        if (!exportInfos) {
-          throw new Error('MultiToc must be defined');
-        }
-        return exportInfos;
-      }).catch((err: Error) => PromiseEs6.reject(new Error('Could not read MultiToc: ' + (err && err.message))));
-  }
-
-  private initExportId(exportId: string, lang?: string): void {
-    const exportInfo: ExportInfo = this.infos.get(exportId);
-    if (!exportInfo || !exportInfo.info) {
-      // If no export was found with this id, take the first available one
-      exportId = this.infos.keys().next().value;
-    }
-    this.setCurrentExportId(exportId, lang);
-  }
-
-  private initLanguages(lang?: string): string {
-    const currentInfo: ExportInfo = this.infos.get(this.currentExportId);
-    if (!currentInfo || !currentInfo.info || !currentInfo.info.defaultLanguage) {
-      throw new Error('Could not initialize languages, no info found for the current export');
-    }
-    return this.translationService.init(currentInfo.info.defaultLanguage, lang, currentInfo.info.languages);
-  }
-
-  private getCurrentInfo(): Info {
-    let currentInfo: Info;
-    if (this.infos && this.doesExportExist(this.getCurrentExportId())) {
-      currentInfo = this.infos.get(this.getCurrentExportId()).info;
-    }
-    return currentInfo;
-  }
-
-  getInfo(info: Info, pluginId: string): Info {
+  getInfo(info: Info | null, pluginId: string): Info {
     if (!info || !info.identifier) {
-      throw new Error(`Info.json file of plugin ${pluginId} is not valid`);
+      throw new Error(`Info.json file of plugin ${ pluginId } is not valid`);
     }
     // For old exports: set system language if default language is not defined
     if (!info.defaultLanguage) {
@@ -196,6 +172,42 @@ export class ExportInfoService {
       info.languages = [LanguageService.SYS_DEFAULT];
     }
     return info;
+  }
+
+  private readMultiToc(): PromiseEs6<ExportInfo[]> {
+    return this.httpClient.getContent<ExportInfo[]>(ContentTypeSuffix.TYPE_MULTI_TOC_SUFFIX)
+      .then((exportInfos: ExportInfo[]) => {
+        if (!exportInfos) {
+          throw new Error('MultiToc must be defined');
+        }
+        return exportInfos;
+      }).catch((err: Error) => PromiseEs6.reject(new Error('Could not read MultiToc: ' + err)));
+  }
+
+  private initExportId(exportId: string | null | undefined, lang?: string): void {
+    const exportInfo: ExportInfo | null | undefined = isNil(exportId) ? null : this.infos.get(exportId);
+    if (!exportInfo || !exportInfo.info) {
+      // If no export was found with this id, take the first available one
+      exportId = this.infos.keys().next().value;
+    }
+    this.setCurrentExportId(exportId, lang);
+  }
+
+  private initLanguages(lang?: string): string | null {
+    const currentInfo: ExportInfo | null | undefined = isNil(this.currentExportId) ? null : this.infos.get(this.currentExportId);
+    if (!currentInfo || !currentInfo.info || !currentInfo.info.defaultLanguage) {
+      throw new Error('Could not initialize languages, no info found for the current export');
+    }
+    return this.translationService.init(currentInfo.info.defaultLanguage, lang, currentInfo.info.languages);
+  }
+
+  private getCurrentInfo(): Info | null | undefined {
+    let currentInfo: Info | null | undefined;
+    const currentExportId = this.getCurrentExportId();
+    if (this.infos && !isNil(currentExportId) && this.doesExportExist(currentExportId)) {
+      currentInfo = this.infos.get(currentExportId)?.info;
+    }
+    return currentInfo;
   }
 
 }

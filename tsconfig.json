@@ -4,9 +4,12 @@
     "target": "es5",
     "moduleResolution": "node",
     "noImplicitAny": true,
-    "outDir": "./lib",
+    "outDir": "./dist/",
     "preserveConstEnums": true,
-    "removeComments": true
+    "removeComments": true,
+    "sourceMap": true,
+    "declaration": true,
+    "strict": true
   },
   "include": [
     "src/**/*",

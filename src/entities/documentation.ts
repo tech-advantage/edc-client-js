@@ -4,11 +4,11 @@ import { Linkable } from './linkable';
 import { Link } from './link';
 
 export class Documentation implements Loadable, Indexable, Linkable {
-  id: number;
-  exportId: string;
-  label: string;
-  topics: Documentation[];
-  url: string;
-  content?: string;
-  links: Link[];
+  id: number | null = null;
+  exportId: string | null = '';
+  label: string | null = '';
+  topics: Documentation[] | null = null;
+  url: string | null = '';
+  content?: string | null = '';
+  links: Link[] | null = null;
 }

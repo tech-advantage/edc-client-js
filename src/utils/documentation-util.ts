@@ -1,10 +1,9 @@
-import { get, isNil, reduce, first, split, assign } from 'lodash';
-
+import { first, get, split } from 'lodash-es';
 import { LANGUAGE_CODES } from '../language-codes';
 import { MultiToc } from '../entities/multi-toc';
 import { InformationMap } from '../entities/information-map';
 import { Documentation } from '../entities/documentation';
-import { Utils } from './utils';
+import { isNil, Utils } from './utils';
 import { Indexable } from '../entities/indexable';
 import { LanguageService } from '../services/language.service';
 
@@ -20,25 +19,28 @@ export class DocumentationUtil {
    * @param {boolean} isRoot: true if indexables is a root (initial function call)
    * @return {{ [key: string]: string }} returns a map with the paths of all documentations of the tree
    */
-  static indexTree(indexables: Indexable[], prefix?: string, isRoot?: boolean): { [key: string]: string } {
+  static indexTree(indexables: Indexable[] | null | undefined, prefix?: string | undefined, isRoot?: boolean): { [p: string]: string | undefined } {
+    if (!indexables) {
+      return {};
+    }
     // iterate through topics and reduce the documentations concatenating the path with parents
-    return reduce(indexables, (memo: { [key: string]: string }, doc: Documentation, index: number) => {
+    return indexables.reduce<{ [p: string]: string | undefined }>((memo: { [key: string]: string | undefined }, doc: Indexable, index: number): { [p: string]: string | undefined } => {
       if (!doc) {
         return memo;
       }
-      const {id, topics} = doc;
+      const { id, topics } = doc;
       // Take the prefix as it is if root, else append path to get the children
-      const newPrefix = isRoot ? prefix : `${prefix}.topics[${index}]`;
+      const newPrefix = isRoot ? prefix : `${ prefix }.topics[${ index }]`;
       if (!isNil(id)) {
         memo[id] = newPrefix;
       }
       // recall the function with topics until reaching the tree leaf
-      return assign(memo, DocumentationUtil.indexTree(topics, newPrefix));
+      return { ...memo, ...DocumentationUtil.indexTree(topics, newPrefix) };
     }, {});
   }
 
-  static findFirstContent<T, G>(source: T): G {
-    let content: G;
+  static findFirstContent<T, G>(source: T): G | null {
+    let content: G | null = null;
     for (const langCode of LANGUAGE_CODES) {
       content = Utils.safeGet<T, G>(source, [langCode]);
       if (content) {
@@ -54,21 +56,24 @@ export class DocumentationUtil {
    * @param multiToc
    * @param docId
    */
-  static findIMFromDocumentationId(multiToc: MultiToc, docId: number): InformationMap {
+  static findIMFromDocumentationId(multiToc: MultiToc | null, docId: number | null): InformationMap | null {
     let informationMap;
-    if (!isNil(docId) && multiToc && multiToc.index && multiToc.exports) {
+    if (isNil(docId)) {
+      return null;
+    }
+    if (multiToc && multiToc.index && multiToc.exports) {
       const docPath = multiToc.index[docId];
       const iMPath = DocumentationUtil.findIMPathFromDocPath(docPath);
       informationMap = get(multiToc, iMPath);
     }
     if (!informationMap) {
-      throw Error(`Could not find informationMap from documentation id : ${docId}`);
+      throw Error(`Could not find informationMap from documentation id : ${ docId }`);
     }
     return informationMap;
   }
 
-  static findDocumentationFromId(multiToc: MultiToc, id: number, langCode: string, defaultLang?: string): Documentation {
-    const indexKey = `index[${id}]`;
+  static findDocumentationFromId(multiToc: MultiToc | null, id: number, langCode: string | null, defaultLang?: string | null): Documentation {
+    const indexKey = `index[${ id }]`;
     // Get the full documentation path from the index
     const docPath: string = get(multiToc, indexKey);
     // Build the real path, replacing language code with its actual value
@@ -82,8 +87,11 @@ export class DocumentationUtil {
     return doc;
   }
 
-  static findPluginIdFromDocumentationId(multiToc: MultiToc, docId: number): string {
-    const docPath: string = get(multiToc, `index[${docId}]`);
+  static findPluginIdFromDocumentationId(multiToc: MultiToc | null, docId: number | null): string | null {
+    if (isNil(docId)) {
+      return null;
+    }
+    const docPath: string = get(multiToc, `index[${ docId }]`);
     const exportPath = DocumentationUtil.findExportPathFromDocPath(docPath);
     return get(multiToc, exportPath);
   }
@@ -95,7 +103,7 @@ export class DocumentationUtil {
    */
   static findExportPathFromDocPath(docPath: string): string {
     const rootPath = first(split(docPath, '.'));
-    return `${rootPath}.pluginId`;
+    return `${ rootPath }.pluginId`;
   }
 
   /**
@@ -104,12 +112,12 @@ export class DocumentationUtil {
    * @param docPath the path of the documentation in a multiToc index
    * @param langCode the code to use for the path
    */
-  static replaceLanguageCode(docPath: string, langCode: string): string {
-    if (!docPath) {
+  static replaceLanguageCode(docPath: string, langCode: string | null): string {
+    if (!docPath || !langCode) {
       return '';
     }
     // The information map path is the part of the doc path before the lang selector
-    return docPath.replace(LanguageService.LANG_SEPARATOR, `[${langCode}]`);
+    return docPath.replace(LanguageService.LANG_SEPARATOR, `[${ langCode }]`);
   }
 
   /**

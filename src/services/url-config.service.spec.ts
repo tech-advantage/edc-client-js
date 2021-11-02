@@ -1,10 +1,15 @@
 import { UrlConfigService } from './url-config.service';
+import { cleanInstances } from '../utils/test-utils';
 
 describe('UrlConfig service', () => {
   let urlConfigService: UrlConfigService;
   beforeEach(() => {
     urlConfigService = UrlConfigService.getInstance();
     urlConfigService.setURLs('http://localhost:8080', 'http://localhost:8080/help', 'http://localhost:8080/doc/i18n');
+  });
+
+  afterEach(() => {
+    cleanInstances();
   });
 
   it('should return the documentation url', () => {

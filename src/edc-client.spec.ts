@@ -1,57 +1,15 @@
 import { EdcClient } from './edc-client';
-import { mock, async, mockHttpClientGetContent, mockHttpClientGet } from './utils/test-utils';
-import { MultiToc } from './entities/multi-toc';
-import { ContextualHelp } from './entities/contextual-help';
-import { Helper } from './entities/helper';
-import { Article } from './entities/article';
-import { Info } from './entities/info';
+import { async, cleanInstances, mockHttpClientGet, mockHttpClientGetContent } from './utils/test-utils';
 import { EdcHttpClient } from './http/edc-http-client';
 import { informationMaps } from './test/information-maps-stub';
 import { ExportInfo } from './entities/export-info';
+import { InformationMap } from './entities/information-map';
 
 describe('EDC client', () => {
   let edcClient: EdcClient;
-  let info: Info;
-  let globalToc: MultiToc;
-  let context: ContextualHelp;
 
-  beforeEach(() => {
-
-    info = mock(Info, {
-      defaultLanguage: 'ru',
-      languages: ['ru', 'en', 'fr']
-    });
-
-    context = {
-      'mainKey': {
-        'subKey': {
-          'en': mock(Helper, {
-            'description': 'fake context',
-            'articles': [
-              mock(Article, {
-                'label': 'abc',
-                'url': 'def'
-              })
-            ]
-          })
-        }
-      }
-    };
-    const docExportsData = [
-      {
-        pluginId: 'myExportId1',
-        productId: 'myProductId1'
-      },
-      {
-        pluginId: 'myExportId2',
-        productId: 'myProductId2'
-      }
-    ];
-
-    globalToc = mock(MultiToc, { exports: docExportsData });
-  });
-
-  beforeEach(() => {
+  afterEach(() => {
+    cleanInstances();
   });
 
   describe('init', () => {
@@ -65,7 +23,7 @@ describe('EDC client', () => {
       const baseURL = 'http://base.url:8080/doc';
       edcClient = new EdcClient(baseURL);
 
-      return edcClient.getContent().then((exportInfo: ExportInfo) => {
+      return edcClient.getContent().then((exportInfo: ExportInfo | null) => {
         expect(exportInfo).toBeDefined();
         expect(edcClient.getCurrentLanguage()).toEqual('en');
         expect(edcClient.getDefaultLanguage()).toEqual('en');
@@ -76,7 +34,7 @@ describe('EDC client', () => {
       const baseURL = 'http://base.url:8080/doc';
       const helpURL = 'http://base.url:8080/help';
       edcClient = new EdcClient(baseURL, helpURL, 'myProduct5');
-      return edcClient.getContent().then((exportInfo: ExportInfo) => {
+      return edcClient.getContent().then((exportInfo: ExportInfo | null) => {
         expect(exportInfo).toBeDefined();
 
         expect(edcClient.getCurrentLanguage()).toEqual('es');
@@ -89,7 +47,7 @@ describe('EDC client', () => {
 
     beforeEach(() => {
       spyOn(EdcHttpClient.getInstance(), 'getContent').and.callFake(mockHttpClientGetContent);
-      spyOn(EdcHttpClient.getInstance(), 'getFile').and.callFake(mockHttpClientGet(informationMaps));
+      spyOn(EdcHttpClient.getInstance(), 'getFile').and.callFake(mockHttpClientGet<InformationMap>(informationMaps));
     });
 
     it('should get documentation url with default language', async(() => {
@@ -165,7 +123,7 @@ describe('EDC client', () => {
       });
     }));
 
-    it('should get web help i18n url', async(() => {
+    it('should get web help i18n url', () => {
       const baseURL = 'http://base.url:8080/doc';
       const helpURL = 'http://base.url:8080/help';
       edcClient = new EdcClient(baseURL, helpURL, 'myExportId2');
@@ -173,18 +131,18 @@ describe('EDC client', () => {
       return edcClient.getContent().then(() => {
         expect(edcClient.getWebHelpI18nUrl()).toEqual('http://base.url:8080/doc/i18n/web-help');
       });
-    }));
+    });
 
-    it('should get custom i18n url', async(() => {
+    it('should get custom i18n url', () => {
       const baseURL = 'http://base.url:8080/doc';
       const helpURL = 'http://base.url:8080/help';
       const i18nURL = 'http://base.url:8080/customI18N/i18n/custom';
       edcClient = new EdcClient(baseURL, helpURL, 'myExportId2', true, i18nURL);
 
       return edcClient.getContent().then(() => {
-        expect(edcClient.getPopoverI18nUrl()).toEqual(i18nURL);
-        expect(edcClient.getWebHelpI18nUrl()).toEqual(i18nURL);
+        expect(edcClient.getPopoverI18nUrl()).toEqual('http://base.url:8080/customI18N/i18n/custom/popover');
+        expect(edcClient.getWebHelpI18nUrl()).toEqual('http://base.url:8080/customI18N/i18n/custom/web-help');
       });
-    }));
+    });
   });
 });
