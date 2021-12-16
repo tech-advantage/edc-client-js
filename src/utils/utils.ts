@@ -18,4 +18,4 @@ export const isNil = (value: unknown): value is null | undefined => value === un
 export const removeNils = <T>(arr: Array<T | null | undefined>): T[] => (arr ?? []).filter<T>((item: T | null | undefined): item is T => !isNil(item));
 
 export const hasOwnProperty = <X, Y extends PropertyKey>(obj: X, prop: Y): obj is X & Record<Y, unknown> =>
-  Object.prototype.hasOwnProperty.call(obj, prop);
+  !!obj && Object.prototype.hasOwnProperty.call(obj, prop);
