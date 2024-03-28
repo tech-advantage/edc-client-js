@@ -16,7 +16,7 @@ describe('utils', () => {
             en: mock(Helper, {description: 'description 2 in english'})
           }
         }
-      };
+      } as ContextualHelp;
     });
     it('should return the property', () => {
       const property = Utils.safeGet<ContextualHelp, string>(sourceObj, ['main.key', 'sub.key.two', 'en', 'description']);

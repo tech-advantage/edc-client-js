@@ -53,7 +53,7 @@ export class ContextService {
    */
   readContext(pluginId: string | null): PromiseEs6<ContextualExport> {
     return this.httpClient.getContent<ContextualHelp>(ContentTypeSuffix.TYPE_CONTEXT_SUFFIX, pluginId)
-      .then((contextualHelp: ContextualHelp) => new ContextualExport(pluginId, contextualHelp));
+      .then((contextualHelp: ContextualHelp | null) => new ContextualExport(pluginId, contextualHelp));
   }
 
   getContext(mainKey: string, subKey: string, pluginId: string | null, lang?: string | null): PromiseEs6<Helper | null> {

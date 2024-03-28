@@ -1,6 +1,6 @@
 import { get } from 'lodash-es';
 import axios, { AxiosResponse, AxiosError } from 'axios';
-import { Promise, Promise as PromiseEs6 } from 'es6-promise';
+import { Promise } from 'es6-promise';
 import { ContentTypeSuffix } from '../entities/content-type';
 import { UrlConfigService } from '../services/url-config.service';
 import { Loadable } from '../entities/loadable';
@@ -18,24 +18,24 @@ export class EdcHttpClient {
     return EdcHttpClient.instance;
   }
 
-  getFile<T>(fileName: string | null, exportId?: string): PromiseEs6<T | null> {
+  getFile<T>(fileName: string | null, exportId?: string): Promise<T | null> {
     const url = this.urlConfigService.getFileUrl(fileName, exportId);
     if (!url) {
-      return PromiseEs6.reject('Invalid url');
+      return Promise.reject('Invalid url');
     }
     return axios.get<T>(url)
       .then((res: AxiosResponse) => get(res, 'status') === 200 ? res.data : null,
-        (err: AxiosError) => PromiseEs6.reject(err)) as PromiseEs6<T | null>;
+        (err: AxiosError) => Promise.reject(err)) as Promise<T | null>;
   }
 
-  getContent<T>(suffix: ContentTypeSuffix, exportId?: string | null): PromiseEs6<T> {
+  getContent<T>(suffix: ContentTypeSuffix, exportId?: string | null): Promise<T | null> {
     const url = this.urlConfigService.getContentUrl(suffix, exportId);
     if (!url) {
-      return PromiseEs6.reject('Invalid url');
+      return Promise.reject('Invalid url');
     }
     return axios.get<T>(url)
       .then((res: AxiosResponse) => get(res, 'status') === 200 ? res.data : null,
-        (err: AxiosError) => PromiseEs6.reject(err));
+        (err: AxiosError) => Promise.reject(err)) as Promise<T | null>;
   }
 
   getItemContent<T extends Loadable>(item: T): Promise<T | null> {
