@@ -117,7 +117,7 @@ export class DocumentationService {
 
   private readSingleToc(exportId: string, exportInfo: ExportInfo): PromiseEs6<DocumentationExport | null> {
     return this.httpClient.getContent<BaseToc>(ContentTypeSuffix.TYPE_TOC_SUFFIX, exportId)
-      .then((toc: BaseToc) => this.readInformationMaps(exportId, toc))
+      .then((toc: BaseToc | null) => this.readInformationMaps(exportId, toc))
       .then((toc: Toc | null) => new DocumentationExport(
         exportId,
         exportInfo.productId,
@@ -130,12 +130,11 @@ export class DocumentationService {
       });
   }
 
-  private readInformationMaps(exportId: string, toc: BaseToc): PromiseEs6<Toc | null> {
-    const { toc: tocInfos } = toc;
-    return PromiseEs6.all((tocInfos ?? [])
+  private readInformationMaps(exportId: string, toc: BaseToc | null): PromiseEs6<Toc | null> {
+    return PromiseEs6.all((toc?.toc ?? [])
       .map((tocInfo: TocInfo) => this.httpClient.getFile<InformationMap>(tocInfo.file, exportId)))
       .then(removeNils)
-      .then((ims: InformationMap[]) => new Toc(toc.label, ims))
+      .then((ims: InformationMap[]) => new Toc(toc?.label, ims))
       .catch(err => {
         console.error('Could not get toc ', toc, err);
         return PromiseEs6.resolve(null);
