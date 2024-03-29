@@ -1,4 +1,4 @@
-import { Promise, Promise as PromiseEs6 } from 'es6-promise';
+import { Promise as PromiseEs6 } from 'es6-promise';
 import { Info } from '../entities/info';
 import { ContentTypeSuffix } from '../entities/content-type';
 import { ExportInfo } from '../entities/export-info';
@@ -98,15 +98,15 @@ export class ExportInfoService {
   }
 
   getCurrentExportInfo(): PromiseEs6<ExportInfo | null | undefined> {
-    return isNil(this.infosReady) ? Promise.reject('No information for current export')
+    return (isNil(this.infosReady) ? Promise.reject<string>('No information for current export')
       : this.infosReady.then(() => {
-        const currentExportId = this.getCurrentExportId();
+        const currentExportId: string | null = this.getCurrentExportId();
         const exportInfo: ExportInfo | null | undefined = isNil(currentExportId) ? null : this.infos.get(currentExportId);
         if (exportInfo) {
           exportInfo.currentLanguage = this.translationService.getCurrentLanguage();
         }
         return exportInfo;
-      });
+      })) as PromiseEs6<ExportInfo | null | undefined>;
   }
 
   /**
@@ -122,7 +122,7 @@ export class ExportInfoService {
     }
     this.infos.clear();
     return this.httpClient.getContent<Info>(ContentTypeSuffix.TYPE_INFO_SUFFIX, exportInfo.pluginId)
-      .then((info: Info) => {
+      .then((info: Info | null) => {
         exportInfo.info = this.getInfo(info, exportInfo.pluginId);
         this.infos.set(exportInfo.pluginId, exportInfo);
         return info;
@@ -176,7 +176,7 @@ export class ExportInfoService {
 
   private readMultiToc(): PromiseEs6<ExportInfo[]> {
     return this.httpClient.getContent<ExportInfo[]>(ContentTypeSuffix.TYPE_MULTI_TOC_SUFFIX)
-      .then((exportInfos: ExportInfo[]) => {
+      .then((exportInfos: ExportInfo[] | null) => {
         if (!exportInfos) {
           throw new Error('MultiToc must be defined');
         }
